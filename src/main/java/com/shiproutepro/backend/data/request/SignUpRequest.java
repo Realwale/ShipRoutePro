@@ -1,4 +1,4 @@
-package com.shiproutepro.backend.data;
+package com.shiproutepro.backend.data.request;
 
 import lombok.*;
 

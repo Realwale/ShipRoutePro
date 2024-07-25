@@ -3,9 +3,12 @@ package com.shiproutepro.backend.entities;
 import com.shiproutepro.backend.enums.AccountCategory;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -29,10 +32,18 @@ public class AppUser implements UserDetails {
     private String email;
     private String password;
     private String companyAddress;
+    private int failedLoginAttempts;
+    private boolean isEmailVerified;
+    @CreationTimestamp
+    private LocalDateTime createdOn;
+    private LocalDateTime lockTime;
 
     @Column(name = "account_type")
     @Enumerated(EnumType.STRING)
     private AccountCategory type;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JwtToken> jwtTokens;
 
 
     @Override
@@ -68,6 +79,29 @@ public class AppUser implements UserDetails {
     @Override
     public String getPassword() {
         return password;
+    }
+
+    public boolean isAccountLocked() {
+        if (lockTime == null) {
+            return false;
+        }
+        return lockTime.isAfter(LocalDateTime.now());
+    }
+
+    public void increaseFailedAttempts() {
+        this.failedLoginAttempts++;
+    }
+
+    public void resetFailedAttempts() {
+        this.failedLoginAttempts = 0;
+    }
+
+    public void lockAccount(int min) {
+        this.lockTime = LocalDateTime.now().plusMinutes(min);
+    }
+
+    public void unlockAccount() {
+        this.lockTime = null;
     }
 
 }
